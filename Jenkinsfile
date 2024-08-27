@@ -4,12 +4,12 @@ pipeline {
     parameters {
             booleanParam(name: 'PLAN_TERRAFORM', defaultValue: false, description: 'Check to plan Terraform changes')
             booleanParam(name: 'APPLY_TERRAFORM', defaultValue: false, description: 'Check to apply Terraform changes')
-            booleanParam(name: 'DEPLOY_TO_EKS', defaultValue: false, description: 'Check to DEPLOY TO EKS CLUSTER')
+            booleanParam(name: 'DEPLOY_TO_EKS', defaultValue: false, description: 'Check to deploy to eks')
             booleanParam(name: 'DESTROY_TERRAFORM', defaultValue: false, description: 'Check to apply Terraform changes')
-            
     }
 
     stages {
+
         stage('Terraform Init') {
                     steps {
                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-crendentails-xybuild']]){
@@ -50,17 +50,18 @@ pipeline {
                 }
             }
         }
+
         stage("Deploy To Eks") {
             steps {
                 script {
                     if (params.DEPLOY_TO_EKS) {
                         dir('kubernetes') {
                             withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-crendentails-xybuild']]){
-                        sh "aws eks update-kubeconfig --name xycluster"
-                        sh "kubectl apply -f ."
+                                sh "aws eks update-kubeconfig --name xycluster"
+                                sh "kubectl apply -f ."
+                            }
+                        }
                     }
-                    }
-                    
                 }
             }
         }

@@ -4,27 +4,16 @@ pipeline {
     parameters {
             booleanParam(name: 'PLAN_TERRAFORM', defaultValue: false, description: 'Check to plan Terraform changes')
             booleanParam(name: 'APPLY_TERRAFORM', defaultValue: false, description: 'Check to apply Terraform changes')
+            booleanParam(name: 'DEPLOY_TO_EKS', defaultValue: false, description: 'Check to DEPLOY TO EKS CLUSTER')
             booleanParam(name: 'DESTROY_TERRAFORM', defaultValue: false, description: 'Check to apply Terraform changes')
+            
     }
 
     stages {
-        // stage('Clone Repository') {
-        //     steps {
-        //         // Clean workspace before cloning (optional)
-        //         deleteDir()
-
-        //         // Clone the Git repository
-        //         git branch: 'main',
-        //             url: 'https://github.com/DasoTD/cloudJen.git'
-
-        //         sh "ls -lart"
-        //     }
-        // }
-
         stage('Terraform Init') {
                     steps {
                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-crendentails-xybuild']]){
-                            dir('infra') {
+                            dir('infrastructure') {
                             sh 'echo "=================Terraform Init=================="'
                             sh 'terraform init'
                         }
@@ -37,7 +26,7 @@ pipeline {
                 script {
                     if (params.PLAN_TERRAFORM) {
                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-crendentails-xybuild']]){
-                            dir('infra') {
+                            dir('infrastructure') {
                                 sh 'echo "=================Terraform Plan=================="'
                                 sh 'terraform plan'
                             }
@@ -52,12 +41,25 @@ pipeline {
                 script {
                     if (params.APPLY_TERRAFORM) {
                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-crendentails-xybuild']]){
-                            dir('infra') {
+                            dir('infrastructure') {
                                 sh 'echo "=================Terraform Apply=================="'
                                 sh 'terraform apply -auto-approve'
                             }
                         }
                     }
+                }
+            }
+        }
+        stage("Deploy To Eks") {
+            steps {
+                script {
+                    if (params.DEPLOY_TO_EKS) {
+                        dir('kubernetes') {
+                        sh "aws eks update-kubeconfig --name xycluster"
+                        sh "kubectl apply -f ."
+                    }
+                    }
+                    
                 }
             }
         }
@@ -67,7 +69,7 @@ pipeline {
                 script {
                     if (params.DESTROY_TERRAFORM) {
                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-crendentails-xybuild']]){
-                            dir('infra') {
+                            dir('infrastructure') {
                                 sh 'echo "=================Terraform Destroy=================="'
                                 sh 'terraform destroy -auto-approve'
                             }

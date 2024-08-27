@@ -55,6 +55,7 @@ pipeline {
                 script {
                     if (params.DEPLOY_TO_EKS) {
                         dir('kubernetes') {
+                            withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-crendentails-xybuild']]){
                         sh "aws eks update-kubeconfig --name xycluster"
                         sh "kubectl apply -f ."
                     }

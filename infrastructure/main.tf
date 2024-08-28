@@ -1,43 +1,73 @@
-module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
-
-  name = "terra"
-  cidr = "10.0.0.0/16"
-
-  azs             = ["us-east-1a", "us-east-1b"]
-  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
-  public_subnets  = ["10.0.3.0/24", "10.0.4.0/24"]
-
-  enable_nat_gateway   = true
-  single_nat_gateway   = true
-  enable_dns_hostnames = true
+# Create a VPC
+resource "aws_vpc" "example" {
+  cidr_block = "10.0.0.0/16"
 
   tags = {
-    Terraform   = "true"
-    Environment = "dev"
+    Name = "example-vpc"
   }
 }
 
-module "ec2_instance" {
-  source  = "terraform-aws-modules/ec2-instance/aws"
-
-  name = "single-instance"
-
-  instance_type          = "t2.micro"
-  key_name               = "user1"
-  monitoring             = true
-  vpc_security_group_ids = ["sg-12345678"]
-  subnet_id              = "subnet-eddcdzz4"
+# Create a public subnet within the VPC
+resource "aws_subnet" "example" {
+  vpc_id     = aws_vpc.example.id
+  cidr_block = "10.0.1.0/24"
+  map_public_ip_on_launch = true
 
   tags = {
-    Terraform   = "true"
-    Environment = "dev"
+    Name = "example-subnet"
   }
-  user_data = templatefile("./modules/aws/install_aws.sh", {})
-
 }
 
+# Create a security group within the same VPC
+resource "aws_security_group" "allow_ssh" {
+  vpc_id = aws_vpc.example.id
 
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "allow_ssh"
+  }
+}
+
+# Create an EC2 instance using the subnet and security group from the same VPC
+resource "aws_instance" "web" {
+  ami           = "ami-0e86e20dae9224db8" # Amazon Linux 2 AMI ID
+  instance_type = "t2.micro"
+  //availability_zone = "us-east-1a"
+  subnet_id     = aws_subnet.example.id
+  vpc_security_group_ids = [aws_security_group.allow_ssh.id]
+  //key_name      = "public"
+
+  user_data = <<-EOF
+              #!/bin/bash
+              sudo apt-get update
+              sudo apt-get install -y unzip curl
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              sudo ./aws/install
+              aws --version
+              EOF
+
+  tags = {
+    Name = "Terraform-Example"
+  }
+}
+
+output "instance_public_ip" {
+  value = aws_instance.web.public_ip
+}
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
@@ -80,54 +110,3 @@ module "eks" {
 
 
 }
-
-/*module "vpc" {
-    source               = "./modules/vpc"
-    vpc_cidr             = var.vpc_cidr
-    vpc_name             = var.vpc_name
-    cidr_public_subnet   = var.cidr_public_subnet
-    availability_zone = var.availability_zone
-    cidr_private_subnet  = var.cidr_private_subnet
-}
-
-module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.0"
-
-  cluster_name    = "capstonewithjenkins"
-  cluster_version = "1.30"
-
-  cluster_endpoint_public_access = true
-
-
-
-  vpc_id     = module.vpc.capstoneWithJenkins_vpc_id
-  subnet_ids = module.vpc.capstoneWithJenkins_private_subnets
-
-  eks_managed_node_group_defaults = {
-    ami_type       = "AL2_x86_64"
-  }
-
-  eks_managed_node_groups = {
-    node1 = {
-      instance_types = ["t2.xlarge"]
-
-      min_size     = 1
-      max_size     = 2
-      desired_size = 2
-    }
-
-
-    node2 = {
-      instance_types = ["t2.xlarge"]
-
-      min_size     = 1
-      max_size     = 2
-      desired_size = 2
-    }
-  }
-
-  enable_cluster_creator_admin_permissions = true
-
-
-}*/

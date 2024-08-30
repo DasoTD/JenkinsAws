@@ -1,4 +1,4 @@
-variable "ami_id" {}
+
 variable "instance_type" {}
 variable "subnet_id" {}
 variable "public_key" {}
@@ -8,7 +8,7 @@ variable "security_groups" {}
 
 
 resource "aws_instance" "capstonewithjenkins" {
-  ami           = var.ami_id #"ami-0e86e20dae9224db8" # Amazon Linux 2 AMI ID
+  ami           = "ami-0e86e20dae9224db8" # Amazon Linux 2 AMI ID
   instance_type = var.instance_type //"t2.micro"
   subnet_id     = var.subnet_id 
   key_name                    = "aws_ec2_terraform"

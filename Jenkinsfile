@@ -57,7 +57,7 @@ pipeline {
                     if (params.DEPLOY_TO_EKS) {
                         dir('kubernetes') {
                             withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-crendentails-xybuild']]){
-                                sh "aws eks update-kubeconfig --name terraeks"
+                                sh "aws eks update-kubeconfig --name shopeks"
                                 sh "kubectl apply -f ."
                             }
                         }

@@ -79,7 +79,7 @@ module "vpc" {
 
 
 
-module "eks" {
+/*module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
 
@@ -119,18 +119,22 @@ module "eks" {
   enable_cluster_creator_admin_permissions = true
 
 
-}
+}*/
 
 
 module "ec2" {
   source = "./modules/ec2"
   instance_type             = "t2.medium"
-  tag_name                  = "capjen"
+  tag_name                  = "CAPITOL"
   public_key                = var.public_key
   subnet_id                 = tolist(module.vpc.private_subnets)[0]
   enable_public_ip_address  = true
   security_groups = [module.sg.aws_security_group_id]
+  user_data_install_aws = templatefile("./modules/aws/install_aws.sh", {})
+
 }
+
+
 
 module "sg" {
   source = "./modules/sg"

@@ -12,7 +12,7 @@ resource "aws_instance" "capstonewithjenkins" {
   ami           = "ami-0e86e20dae9224db8"
   instance_type = var.instance_type
   subnet_id     = var.subnet_id 
-  key_name                    = "aws_ec2_terraform"
+  key_name                    = "aws_ec2_tf"
   associate_public_ip_address = var.enable_public_ip_address
   vpc_security_group_ids = var.security_groups
   user_data = var.user_data_install_aws

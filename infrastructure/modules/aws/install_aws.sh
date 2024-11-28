@@ -1,19 +1,79 @@
 
 
-# Update the package list
+# # Update the package list
+# sudo apt-get update
+
+# # Install unzip and curl if not already installed
+# sudo apt-get install -y unzip curl
+
+# # Download the AWS CLI zip file
+# curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+# # Unzip the installer
+# unzip awscliv2.zip
+
+# # Run the installer
+# sudo ./aws/install
+
+
+#!/bin/bash
+# Wait for cloud-init to complete
+while [ ! -f /var/lib/cloud/instance/boot-finished ]; do
+sleep 1
+done
+
+# Update system
 sudo apt-get update
+sudo apt-get upgrade -y
 
-# Install unzip and curl if not already installed
-sudo apt-get install -y unzip curl
+# Install required packages
+sudo apt-get install -y \
+apt-transport-https \
+ca-certificates \
+curl \
+software-properties-common \
+gnupg \
+unzip \
+git \
+jq \
+build-essential
 
-# Download the AWS CLI zip file
+# Install AWS CLI
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-
-# Unzip the installer
 unzip awscliv2.zip
-
-# Run the installer
 sudo ./aws/install
+
+# Install Java 11
+sudo apt-get install -y openjdk-11-jdk
+
+# Install Jenkins
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee \
+/usr/share/keyrings/jenkins-keyring.asc > /dev/null
+echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
+https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+/etc/apt/sources.list.d/jenkins.list > /dev/null
+sudo apt-get update
+sudo apt-get install -y jenkins
+
+# Start Jenkins
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+
+# Install Docker
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
+sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+
+# Start Docker
+sudo systemctl enable docker
+sudo systemctl start docker
+
+# Add users to Docker group
+sudo usermod -aG docker ubuntu
+sudo usermod -aG docker jenkins
+
 
 # Verify installation
 aws --version

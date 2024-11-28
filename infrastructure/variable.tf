@@ -43,3 +43,21 @@ variable "cluster_name" {
   description = "DevOps Altschool cluster name"
   default = "capstoneWithJenkins"
 }
+
+variable "domain_name" {
+  type = string
+  description = "domain name"
+  default = "timileyindaso.com"
+}
+
+variable "name" {
+  type = string
+  description = "name"
+  default = "environment"
+}
+
+variable "environment" {
+  type = string
+  description = "environment"
+  default = "dev"
+}

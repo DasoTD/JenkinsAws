@@ -23,6 +23,16 @@ resource "aws_security_group" "allow_ssh" {
     protocol    = "tcp"
   }
 
+
+  # ssh for terraform remote exec
+  ingress {
+    description = "Allow 8080 port to access jenkins"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+  }
+
   # enable https
   ingress {
     description = "Allow HTTP request from anywhere"
